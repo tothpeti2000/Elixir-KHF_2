@@ -29,10 +29,75 @@ defmodule Khf2 do
   # List of tent position directions relative to the trees
   @type tent_dirs :: [dir]
 
-  @spec to_external(pd :: puzzle_desc, ds :: tent_dirs, file :: String.t()) :: :ok
+  @spec to_external(pd :: puzzle_desc, directions :: tent_dirs, file :: String.t()) :: :ok
   # A pd = {rs, cs, ts} feladványleíró és a ds sátorirány-lista alapján
   # a feladvány szöveges ábrázolását írja ki a file fájlba, ahol
   #   rs a sátrak soronkénti számának a listája,
   #   cs a sátrak oszloponkénti számának a listája,
   #   ts a fákat tartalmazó parcellák koordinátájának listája
+  def to_external({tents_count_rows, tents_count_cols, tree_fields}, directions, file) do
+    n = length(tents_count_rows)
+    tent_fields = get_tent_fields(tree_fields, directions)
+
+    # tents_count_rows = [1, 1, 0, 3, 0]
+    # tents_count_cols = [1, 0, 2, 0, 2]
+    # tree_fields = [{1, 2}, {3, 3}, {3, 5}, {5, 1}, {5, 5}]
+    # tent_fields = [{{1, 3}, :e}, {{4, 3}, :s}, {{2, 5}, :n}, {{4, 1}, :n}, {{4, 5}, :n}]
+
+    rows =
+      for i <- 0..n,
+          do: get_row(i, {tents_count_rows, tents_count_cols, tree_fields, tent_fields})
+
+    lines = Enum.map(rows, fn row -> Enum.join(row, " ") end)
+
+    file_content = Enum.join(lines, "\n")
+    File.write!(file, file_content)
+  end
+
+  @type tent_data :: {field, dir}
+
+  @spec get_tent_data(tree_field :: field, direction :: dir) :: tent_data
+  defp get_tent_data({i, j}, :n), do: {{i - 1, j}, :n}
+  defp get_tent_data({i, j}, :e), do: {{i, j + 1}, :e}
+  defp get_tent_data({i, j}, :s), do: {{i + 1, j}, :s}
+  defp get_tent_data({i, j}, :w), do: {{i, j - 1}, :w}
+
+  @spec get_tent_fields(tree_fields :: [field], directions :: [dir]) :: [tent_data]
+  defp get_tent_fields(_, []), do: []
+
+  defp get_tent_fields(tree_fields, directions) do
+    for i <- 0..(length(tree_fields) - 1),
+        do: get_tent_data(Enum.at(tree_fields, i), Enum.at(directions, i))
+  end
+
+  @spec get_row(
+          i :: Integer,
+          {tents_count_rows :: [Integer], tents_count_cols :: [Integer], tree_fields :: [field],
+           tent_fields :: [tent_data]}
+        ) :: [any]
+  defp get_row(0, {_, tents_count_cols, _, _}), do: tents_count_cols
+
+  defp get_row(i, {tents_count_rows, tents_count_cols, tree_fields, tent_fields}) do
+    m = length(tents_count_cols)
+
+    for j <- 0..m, do: get_row_item(i, j, {tents_count_rows, tree_fields, tent_fields})
+  end
+
+  @spec get_row_item(
+          i :: Integer,
+          j :: Integer,
+          {tents_count_rows :: [Integer], tree_fields :: [field], tent_fields :: [tent_data]}
+        ) :: String
+  defp get_row_item(i, 0, {tents_count_rows, _, _}), do: Enum.at(tents_count_rows, i - 1)
+
+  defp get_row_item(i, j, {_, tree_fields, tent_fields}) do
+    cond do
+      {i, j} in tree_fields -> "*"
+      {{i, j}, :n} in tent_fields -> "N"
+      {{i, j}, :e} in tent_fields -> "E"
+      {{i, j}, :s} in tent_fields -> "S"
+      {{i, j}, :w} in tent_fields -> "W"
+      true -> "-"
+    end
+  end
 end
