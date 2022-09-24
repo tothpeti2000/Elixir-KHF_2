@@ -30,11 +30,10 @@ defmodule Khf2 do
   @type tent_dirs :: [dir]
 
   @spec to_external(pd :: puzzle_desc, directions :: tent_dirs, file :: String.t()) :: :ok
-  # A pd = {rs, cs, ts} feladványleíró és a ds sátorirány-lista alapján
-  # a feladvány szöveges ábrázolását írja ki a file fájlba, ahol
-  #   rs a sátrak soronkénti számának a listája,
-  #   cs a sátrak oszloponkénti számának a listája,
-  #   ts a fákat tartalmazó parcellák koordinátájának listája
+  # Prints the textual representation of the puzzle to the file based on the pd = {rs, cs, ts} puzzle description and the ds tent direction list
+  #   rs: list of the tent counts per row
+  #   cs: list of the tent counts per column
+  #   ts: list of the coordinates of the fields which have a tree on them
   def to_external({tents_count_rows, tents_count_cols, tree_fields}, directions, file) do
     n = length(tents_count_rows)
     tent_fields = get_tent_fields(tree_fields, directions)
@@ -54,15 +53,20 @@ defmodule Khf2 do
     File.write!(file, file_content)
   end
 
+  # Data about the position of a tent
+  # field: which field the tent is on
+  # dir: direction of the tent relative to its corresponding tree
   @type tent_data :: {field, dir}
 
   @spec get_tent_data(tree_field :: field, direction :: dir) :: tent_data
+  # Returns data about a tent based on the position of its corresponding tree and the given direction
   defp get_tent_data({i, j}, :n), do: {{i - 1, j}, :n}
   defp get_tent_data({i, j}, :e), do: {{i, j + 1}, :e}
   defp get_tent_data({i, j}, :s), do: {{i + 1, j}, :s}
   defp get_tent_data({i, j}, :w), do: {{i, j - 1}, :w}
 
   @spec get_tent_fields(tree_fields :: [field], directions :: [dir]) :: [tent_data]
+  # Returns data about all tents based on all trees and the given directions
   defp get_tent_fields(_, []), do: []
 
   defp get_tent_fields(tree_fields, directions) do
@@ -75,6 +79,8 @@ defmodule Khf2 do
           {tents_count_rows :: [Integer], tents_count_cols :: [Integer], tree_fields :: [field],
            tent_fields :: [tent_data]}
         ) :: [any]
+  # Returns the row with the given index in an array format based on the puzzle parameters
+  # These rows will be converted to strings and joined together to create the output file content
   defp get_row(0, {_, tents_count_cols, _, _}), do: tents_count_cols
 
   defp get_row(i, {tents_count_rows, tents_count_cols, tree_fields, tent_fields}) do
@@ -88,6 +94,8 @@ defmodule Khf2 do
           j :: Integer,
           {tents_count_rows :: [Integer], tree_fields :: [field], tent_fields :: [tent_data]}
         ) :: String
+  # Returns a string representing an item in the output file content
+  # This string can be the number of tents in a row, * if it's a tree field, N/E/S/W if it's a tent field or - if it's a regular field
   defp get_row_item(i, 0, {tents_count_rows, _, _}), do: Enum.at(tents_count_rows, i - 1)
 
   defp get_row_item(i, j, {_, tree_fields, tent_fields}) do
