@@ -2,8 +2,8 @@ defmodule Khf2 do
   @moduledoc """
   Camping map
   
-  @author "Egyetemi Hallgató <egy.hallg@dp.vik.bme.hu>"
-  @date   "2022-09-30"
+  @author "Tóth Péter tothpeti2000@edu.bme.hu"
+  @date   "2022-09-24"
   ...
   """
 
@@ -58,7 +58,7 @@ defmodule Khf2 do
   # dir: direction of the tent relative to its corresponding tree
   @type tent_data :: {field, dir}
 
-  @spec get_tent_data(tree_field :: field, direction :: dir) :: tent_data
+  @spec get_tent_data(tree_field :: field, direction :: dir) :: tent_position_data :: tent_data
   # Returns data about a tent based on the position of its corresponding tree and the given direction
   defp get_tent_data({i, j}, :n), do: {{i - 1, j}, :n}
   defp get_tent_data({i, j}, :e), do: {{i, j + 1}, :e}
@@ -78,7 +78,7 @@ defmodule Khf2 do
           i :: Integer,
           {tents_count_rows :: [Integer], tents_count_cols :: [Integer], tree_fields :: [field],
            tent_fields :: [tent_data]}
-        ) :: [any]
+        ) :: row :: [any]
   # Returns the row with the given index in an array format based on the puzzle parameters
   # These rows will be converted to strings and joined together to create the output file content
   defp get_row(0, {_, tents_count_cols, _, _}), do: tents_count_cols
@@ -93,7 +93,7 @@ defmodule Khf2 do
           i :: Integer,
           j :: Integer,
           {tents_count_rows :: [Integer], tree_fields :: [field], tent_fields :: [tent_data]}
-        ) :: String
+        ) :: row_item :: String
   # Returns a string representing an item in the output file content
   # This string can be the number of tents in a row, * if it's a tree field, N/E/S/W if it's a tent field or - if it's a regular field
   defp get_row_item(i, 0, {tents_count_rows, _, _}), do: Enum.at(tents_count_rows, i - 1)
